@@ -1,0 +1,44 @@
+version: "3.9"
+services:
+  traefik:
+    image: 
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+    ports:
+      - ":80"
+      - "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  mongo:
+    image: 
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: 
+
+  rocketchat:
+    image: 
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      MONGO_URL: mongodb://mongo:27017/rocketchat?replicaSet=rs0
+      ROOT_URL: http://localhost:
+      PORT: "3000"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rocketchat.rule=PathPrefix(/)"
+      - "traefik.http.routers.rocketchat.entrypoints=web"
+      - "traefik.http.services.rocketchat.loadbalancer.server.port=3000"
+    ports:
+      - ":3000"
+
+volumes:
+  mongo-data:
