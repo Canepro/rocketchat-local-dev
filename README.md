@@ -14,6 +14,13 @@ Works with Docker or Podman. Designed to be beginner‑friendly.
 
 Tip for Windows users: run this in WSL for the smoothest experience.
 
+## Get the code
+
+```bash
+git clone https://github.com/Canepro/rocketchat-local-dev.git
+cd rocketchat-local-dev
+```
+
 ## Quick start (one command)
 
 ```bash
