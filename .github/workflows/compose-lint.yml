@@ -1,14 +1,35 @@
-name: compose-lint
+name: Compose Lint
 
 on:
   push:
-    branches: [ main ]
+    paths:
+      - 'docker-compose.yml'
+      - 'traefik/**'
+      - '.github/workflows/compose-lint.yml'
+      - '.env.example'
+      - 'up.sh'
+      - 'README.md'
+      - 'down.sh'
+      - 'upgrade.sh'
   pull_request:
+    paths:
+      - 'docker-compose.yml'
+      - 'traefik/**'
+      - '.github/workflows/compose-lint.yml'
+      - '.env.example'
+      - 'up.sh'
+      - 'README.md'
+      - 'down.sh'
+      - 'upgrade.sh'
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Docker Compose Config
-        run: docker compose config
+      - name: Show Docker and Compose versions
+        run: |
+          docker --version
+          docker compose version
+      - name: Validate Compose file
+        run: docker compose -f docker-compose.yml config -q
