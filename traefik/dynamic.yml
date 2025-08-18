@@ -1,0 +1,12 @@
+http:
+  routers:
+    rocketchat:
+      rule: "PathPrefix(`/`)"
+      service: rocketchat
+      entryPoints:
+        - web
+  services:
+    rocketchat:
+      loadBalancer:
+        servers:
+          - url: "http://rocketchat:3000"

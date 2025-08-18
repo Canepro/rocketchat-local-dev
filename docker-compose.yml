@@ -1,44 +1,59 @@
 version: "3.9"
+
 services:
   traefik:
-    image: 
+    image: ${TRAEFIK_IMAGE:-traefik:v2.11}
     command:
       - --api.insecure=true
-      - --providers.docker=true
       - --entrypoints.web.address=:80
+      - --providers.file.directory=/etc/traefik/dynamic
     ports:
-      - ":80"
+      - "${TRAEFIK_HTTP_PORT:-8080}:80"
       - "8081:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik/dynamic:ro
+    restart: unless-stopped
 
   mongo:
-    image: 
+    image: ${MONGO_IMAGE:-mongo:6.0}
     command: ["--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval \"db.runCommand('ping').ok\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
     volumes:
       - mongo-data:/data/db
+    restart: unless-stopped
 
   redis:
-    image: 
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    command: ["redis-server", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
 
   rocketchat:
-    image: 
+    image: ${ROCKETCHAT_IMAGE:-rocketchat/rocket.chat:7.5.1}
     depends_on:
-      - mongo
-      - redis
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       MONGO_URL: mongodb://mongo:27017/rocketchat?replicaSet=rs0
-      ROOT_URL: http://localhost:
+      MONGO_OPLOG_URL: mongodb://mongo:27017/local?replicaSet=rs0
+      ROOT_URL: http://localhost:${TRAEFIK_HTTP_PORT:-8080}
       PORT: "3000"
       REDIS_HOST: redis
       REDIS_PORT: 6379
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.rocketchat.rule=PathPrefix(/)"
-      - "traefik.http.routers.rocketchat.entrypoints=web"
-      - "traefik.http.services.rocketchat.loadbalancer.server.port=3000"
+    # Also expose the app directly on 3000 for convenience
     ports:
-      - ":3000"
+      - "3000:3000"
+    restart: unless-stopped
 
 volumes:
   mongo-data:
