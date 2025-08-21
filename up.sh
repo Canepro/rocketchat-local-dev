@@ -17,6 +17,13 @@ SOCKET_PATH=""
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   ENGINE="docker compose"
   ENGINE_PRETTY="docker compose"
+  #Check if docker service is running or not
+  if docker info >/dev/null 2>&1; then
+        echo "✅ Docker is running"
+    else
+        echo "❌ Docker is NOT running"
+        exit 1
+    fi
   # Detect if the docker CLI is actually a Podman shim (multiple heuristics)
   if docker compose version 2>&1 | grep -qi "Emulate Docker CLI using podman" \
     || docker info 2>&1 | grep -qi "podman" \
